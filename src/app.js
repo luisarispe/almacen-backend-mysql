@@ -1,7 +1,7 @@
-import express from "express";
+const express = require("express");
 require("dotenv").config();
-import morgan from "morgan";
-import cors from "cors";
+const morgan = require("morgan");
+const cors = require("cors");
 
 //app express
 const app = express();
@@ -11,6 +11,6 @@ app.use(morgan("dev"));
 
 app.use(cors());
 
-app.set("port", process.env.PUERTO || 4000);
+app.set("port", process.env.PORT_SERVER || 4000);
 
-export default app;
+module.exports = app;
