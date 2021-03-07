@@ -1,15 +1,20 @@
-const app = require("./app");
-const db = require("./database/config");
+const app = require('./app')
+const { testConneccion } = require('./database/config')
 
-db.sync()
-  .then(function () {
-    console.log("DB conectado");
-  })
-  .catch(function (errror) {
-    console.log(errror);
-  });
+testConneccion()
 
-app.listen(app.get("port"), (err) => {
-  if (err) throw new Error(err);
-  console.log("SV conectado en el puerto " + app.get("port"));
-});
+// db.sync({
+//   // alter: true,
+//   // force: true,
+// })
+//   .then(function () {
+//     console.log("DB conectado");
+//   })
+//   .catch(function (error) {
+//     console.log(error);
+//   });
+
+app.listen(app.get('port'), (err) => {
+  if (err) throw new Error(err)
+  console.log('SV conectado en el puerto ' + app.get('port'))
+})
