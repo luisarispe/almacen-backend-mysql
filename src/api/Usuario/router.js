@@ -32,8 +32,8 @@ router.put(
 router.post(
   '/login',
   [
-    check('correo', 'El correo es obligatorio').isEmail(),
-    check('contrasena', 'La contraseña es obligatoria').not().isEmpty(),
+    check('correo', 'El correo es obligatorio.').isEmail(),
+    check('contrasena', 'La contraseña es obligatoria.').not().isEmpty(),
     validarCampos
   ],
   usuarioController.login

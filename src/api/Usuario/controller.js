@@ -78,10 +78,14 @@ exports.actualizar = async (req, res, next) => {
         }
       }
     )
+    const UsuarioAct = await Usuarios.findByPk(id, {
+      attributes: ['id', 'nombre', 'correo', 'estado', 'createdAt', 'updatedAt']
+    })
 
     return res.status(200).json({
       ok: true,
-      mensaje: 'El usuario fue actualizado.'
+      mensaje: 'El usuario fue actualizado.',
+      UsuarioAct
     })
   } catch (error) {
     console.log(error)
@@ -153,7 +157,8 @@ exports.listar = async (req, res, next) => {
 
     res.status(200).json({
       ok: true,
-      usuarios
+      usuarios: usuarios.rows,
+      total: usuarios.count
     })
   } catch (error) {
     console.log(error)
