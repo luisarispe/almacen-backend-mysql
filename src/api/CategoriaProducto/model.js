@@ -5,8 +5,7 @@ const Usuarios = require('../Usuario/model')
 const CategoriasProductos = db.define('categorias_productos', {
   nombre: {
     type: DataTypes.STRING(100),
-    allowNull: false,
-    trim: true
+    allowNull: false
   },
   estado: {
     type: DataTypes.INTEGER(1),
@@ -20,5 +19,5 @@ CategoriasProductos.belongsTo(Usuarios, {
     name: 'id_usuario'
   }
 })
-
+// CategoriasProductos.sync({})
 module.exports = CategoriasProductos

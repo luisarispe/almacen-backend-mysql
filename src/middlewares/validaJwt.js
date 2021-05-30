@@ -13,7 +13,6 @@ const validarJWT = async (req, res, next) => {
   }
   try {
     const { idUsuario } = jwt.verify(token, process.env.JWT)
-    console.log(idUsuario)
     const usuario = await Usuarios.findOne({
       where: {
         id: idUsuario,

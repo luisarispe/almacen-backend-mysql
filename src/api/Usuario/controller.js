@@ -1,8 +1,9 @@
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const Usuarios = require('./model')
+const { Op } = require('sequelize')
 
-exports.agregarUsuario = async (req, res, next) => {
+exports.agregar = async (req, res, next) => {
   const { correo, contrasena, nombre } = req.body
   try {
     const existeCorreo = await Usuarios.findOne({
@@ -26,6 +27,61 @@ exports.agregarUsuario = async (req, res, next) => {
     return res.status(200).json({
       ok: true,
       mensaje: 'Usuario creado.'
+    })
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+exports.actualizar = async (req, res, next) => {
+  const { id } = req.params
+
+  const { correo, nombre } = req.body
+
+  try {
+    const usuario = await Usuarios.findOne({
+      where: {
+        id
+      }
+    })
+    if (!usuario) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'No existe usuario.'
+      })
+    }
+
+    const validaCorreo = await Usuarios.findOne({
+      where: {
+        correo,
+        id: {
+          [Op.not]: id
+        }
+      }
+    })
+    // VALIDAMOS QUE EL CORREO NUEVO SEA UNICO
+    if (validaCorreo) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'El correo ya esta registrado.'
+      })
+    }
+
+    await Usuarios.update(
+      { nombre, correo },
+      {
+        where: {
+          id
+        }
+      }
+    )
+
+    return res.status(200).json({
+      ok: true,
+      mensaje: 'El usuario fue actualizado.'
     })
   } catch (error) {
     console.log(error)
@@ -73,6 +129,31 @@ exports.login = async (req, res, next) => {
       mensaje: 'Usuario y contraseña correctos',
       token,
       usuario
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+
+exports.listar = async (req, res, next) => {
+  const desde = Number(req.query.desde) || 0
+  try {
+    const usuarios = await Usuarios.findAndCountAll({
+      attributes: ['id', 'nombre', 'correo', 'estado', 'createdAt', 'updatedAt'],
+      order: [
+        ['createdAt', 'DESC']
+      ],
+      offset: desde,
+      limit: 5
+    })
+
+    res.status(200).json({
+      ok: true,
+      usuarios
     })
   } catch (error) {
     console.log(error)

@@ -6,8 +6,7 @@ const CategoriasProductos = require('../CategoriaProducto/model')
 const Productos = db.define('productos', {
   nombre: {
     type: DataTypes.STRING(100),
-    allowNull: false,
-    trim: true
+    allowNull: false
   },
   cantidad: {
     type: DataTypes.INTEGER(10),

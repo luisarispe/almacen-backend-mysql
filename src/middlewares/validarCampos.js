@@ -22,4 +22,17 @@ const validarCampos = (req, res, next) => {
     })
   }
 }
-module.exports = validarCampos
+
+const validaSinCaracteresEsp = (value) => {
+  // SE VALIDA QUE SOLO SE PUEDE INGRESAR LETRAS
+  if (/^[a-zA-ZÀ-ÿ\s]{1,100}$/.test(value)) {
+    return true
+  } else {
+    return false
+  }
+}
+
+module.exports = {
+  validarCampos,
+  validaSinCaracteresEsp
+}

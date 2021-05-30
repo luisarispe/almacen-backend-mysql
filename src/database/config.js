@@ -7,6 +7,14 @@ const db = new Sequelize(
   {
     host: process.env.MYSQL_HOST,
     dialect: 'mysql',
+
+    dialectOptions: {
+      // useUTC: false, //for reading from database
+      dateStrings: true,
+      typeCast: true,
+      timezone: '-04:00'
+    },
+    timezone: '-04:00', // for writing to database
     port: process.env.MYSQL_PORT,
     define: {
       timestamps: true
