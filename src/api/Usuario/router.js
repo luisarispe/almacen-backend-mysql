@@ -43,6 +43,16 @@ router.get(
   validaJWT,
   usuarioController.listar
 )
+router.get(
+  '/actualizarEstado/:id',
+  validaJWT,
+  usuarioController.actualizarEstado
+)
+
+router.get('/traerUsuario/:id',
+  validaJWT,
+  usuarioController.traerUsuario
+)
 
 router.get('/renewToken', validaJWT, usuarioController.renewToken)
 module.exports = router

@@ -1,12 +1,13 @@
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const Usuarios = require('./model')
+const Usuario = require('./model')
 const { Op } = require('sequelize')
+const perfil = require('../model/perfil')
 
 exports.agregar = async (req, res, next) => {
   const { correo, contrasena, nombre } = req.body
   try {
-    const existeCorreo = await Usuarios.findOne({
+    const existeCorreo = await Usuario.findOne({
       where: {
         correo
       }
@@ -17,12 +18,17 @@ exports.agregar = async (req, res, next) => {
         mensaje: 'El correo ya esta registrado.'
       })
     }
-    const usuario = Usuarios.build({ nombre, correo })
 
     const salt = bcryptjs.genSaltSync()
-    usuario.contrasena = bcryptjs.hashSync(contrasena, salt)
 
-    await usuario.save()
+    const usuario = await Usuario.create({
+      nombre,
+      correo,
+      contrasena: bcryptjs.hashSync(contrasena, salt)
+    })
+
+    // SE AGREGA UN PERFIL AL USUARIO POR DEFECTO
+    usuario.addPerfiles(1)
 
     return res.status(200).json({
       ok: true,
@@ -38,11 +44,10 @@ exports.agregar = async (req, res, next) => {
 }
 exports.actualizar = async (req, res, next) => {
   const { id } = req.params
-
   const { correo, nombre } = req.body
 
   try {
-    const usuario = await Usuarios.findOne({
+    const usuario = await Usuario.findOne({
       where: {
         id
       }
@@ -54,7 +59,7 @@ exports.actualizar = async (req, res, next) => {
       })
     }
 
-    const validaCorreo = await Usuarios.findOne({
+    const validaCorreo = await Usuario.findOne({
       where: {
         correo,
         id: {
@@ -70,7 +75,7 @@ exports.actualizar = async (req, res, next) => {
       })
     }
 
-    await Usuarios.update(
+    await Usuario.update(
       { nombre, correo },
       {
         where: {
@@ -78,17 +83,58 @@ exports.actualizar = async (req, res, next) => {
         }
       }
     )
-    const UsuarioAct = await Usuarios.findByPk(id, {
-      attributes: ['id', 'nombre', 'correo', 'estado', 'createdAt', 'updatedAt']
+    const UsuarioAct = await Usuario.findByPk(id, {
+      include: [
+        {
+          model: perfil,
+          as: 'perfiles',
+          attributes: ['id', 'nombre'],
+          through: {
+            attributes: []
+          }
+        }
+      ]
     })
 
     return res.status(200).json({
       ok: true,
       mensaje: 'El usuario fue actualizado.',
-      UsuarioAct
+      usuario: UsuarioAct
     })
   } catch (error) {
     console.log(error)
+    return res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+exports.actualizarEstado = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    const usuario = await Usuario.findByPk(id)
+
+    // VALIDAMOS SI EXISTE EL USUARIO
+    if (!usuario) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'No existe usuario.'
+      })
+    }
+    const estado = usuario.estado === 0 ? 1 : 0
+
+    await Usuario.update(
+      { estado },
+      {
+        where: {
+          id
+        }
+      })
+    return res.status(200).json({
+      ok: true,
+      mensaje: 'Estado actualizado.'
+    })
+  } catch (error) {
     return res.status(500).json({
       ok: false,
       mensaje: 'Hable con el administrador.'
@@ -100,11 +146,23 @@ exports.login = async (req, res, next) => {
   const { correo, contrasena } = req.body
 
   try {
-    const usuario = await Usuarios.findOne({
+    const usuario = await Usuario.findOne({
       where: {
         correo,
         estado: 1
-      }
+      },
+
+      include: [
+        {
+          model: perfil,
+          as: 'perfiles',
+          attributes: ['id', 'nombre'],
+          through: {
+            attributes: []
+          }
+        }
+      ]
+
     })
     if (!usuario) {
       return res.status(500).json({
@@ -146,11 +204,22 @@ exports.login = async (req, res, next) => {
 exports.listar = async (req, res, next) => {
   const desde = Number(req.query.desde) || 0
   try {
-    const usuarios = await Usuarios.findAndCountAll({
+    const usuarios = await Usuario.findAndCountAll({
       attributes: ['id', 'nombre', 'correo', 'estado', 'createdAt', 'updatedAt'],
       order: [
         ['createdAt', 'DESC']
       ],
+      include: [
+        {
+          model: perfil,
+          as: 'perfiles',
+          attributes: ['id', 'nombre'],
+          through: {
+            attributes: []
+          }
+        }
+      ],
+      distinct: true,
       offset: desde,
       limit: 5
     })
@@ -175,7 +244,17 @@ exports.renewToken = async (req, res, next) => {
     const token = jwt.sign({ idUsuario }, process.env.JWT, {
       expiresIn: '24h'
     })
-    const usuario = await Usuarios.findOne({
+    const usuario = await Usuario.findOne({
+      include: [
+        {
+          model: perfil,
+          as: 'perfiles',
+          attributes: ['id', 'nombre'],
+          through: {
+            attributes: []
+          }
+        }
+      ],
       where: {
         estado: 1,
         id: idUsuario
@@ -189,6 +268,41 @@ exports.renewToken = async (req, res, next) => {
     })
   } catch (error) {
     console.log(error)
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+
+exports.traerUsuario = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const usuario = await Usuario.findByPk(id, {
+      include: [
+        {
+          model: perfil,
+          as: 'perfiles',
+          attributes: ['id', 'nombre'],
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    })
+
+    if (!usuario) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'Usuario no encontrado.'
+      })
+    }
+    res.status(200).json({
+      ok: true,
+      usuario
+    })
+  } catch (error) {
     res.status(500).json({
       ok: false,
       mensaje: 'Hable con el administrador.'

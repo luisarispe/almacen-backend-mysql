@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize')
 const { db } = require('../../database/config')
-
-const Usuarios = db.define('usuarios', {
+const perfil = require('../model/perfil')
+const Usuario = db.define('usuario', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -34,6 +34,22 @@ const Usuarios = db.define('usuarios', {
 
 })
 
+const usuariosPerfiles = db.define('usuarios_perfiles', {}, { timestamps: false })
+
+perfil.belongsToMany(Usuario, {
+  through: usuariosPerfiles,
+  foreignKey: 'id_perfil',
+  otherKey: 'id_usuario',
+  as: 'usuarios'
+})
+
+Usuario.belongsToMany(perfil, {
+  through: usuariosPerfiles,
+  foreignKey: 'id_usuario',
+  otherKey: 'id_perfil',
+  as: 'perfiles'
+})
+
 // Usuarios.sync({
 //   alter: true
 // }).then(() => {
@@ -41,4 +57,5 @@ const Usuarios = db.define('usuarios', {
 // }).catch(error => {
 //   console.log(error)
 // })
-module.exports = Usuarios
+
+module.exports = Usuario

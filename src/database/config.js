@@ -13,11 +13,13 @@ const db = new Sequelize(
       dateStrings: true,
       typeCast: true,
       timezone: '-04:00'
+
     },
     timezone: '-04:00', // for writing to database
     port: process.env.MYSQL_PORT,
     define: {
-      timestamps: true
+      timestamps: true,
+      freezeTableName: true
     },
     pool: {
       max: 5,
