@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const Usuario = require('./model')
 const { Op } = require('sequelize')
 const perfil = require('../model/perfil')
+const { enviarCorreo } = require('../../helpers/enviarCorreo')
 
 exports.agregar = async (req, res, next) => {
   const { correo, contrasena, nombre } = req.body
@@ -301,6 +302,44 @@ exports.traerUsuario = async (req, res, next) => {
     res.status(200).json({
       ok: true,
       usuario
+    })
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+exports.recuperarContrasena = async (req, res, next) => {
+  const { correo } = req.body
+  try {
+    const validaCorreo = await Usuario.findOne({
+      where: {
+        estado: 1,
+        correo
+      }
+    })
+
+    if (!validaCorreo) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'El correo no existe.'
+      })
+    }
+
+    const asunto = 'Recuperar Contraseña'
+    const de = { name: 'EleFactory', email: 'factoryele@gmail.com' }
+    const para = [{ name: 'Luis Arispe', email: 'luis.arispe1991@gmail.com' }]
+    const cc = [{ name: 'EleFactory', email: 'factoryele@gmail.com' }]
+    const responder = { name: 'EleFactory', email: 'factoryele@gmail.com' }
+    const template = 1
+    const parametros = { parameter: 'My param value', subject: 'New Subject' }
+    const datosCorreo = { de, para, responder, parametros, template, cc, asunto }
+    await enviarCorreo(datosCorreo)
+
+    res.status(200).json({
+      ok: true,
+      mensaje: 'El correo fue enviado.'
     })
   } catch (error) {
     res.status(500).json({

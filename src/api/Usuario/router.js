@@ -32,7 +32,7 @@ router.put(
 router.post(
   '/login',
   [
-    check('correo', 'El correo es obligatorio.').isEmail(),
+    check('correo', 'Ingrese un correo valido.').isEmail(),
     check('contrasena', 'La contraseña es obligatoria.').not().isEmpty(),
     validarCampos
   ],
@@ -52,6 +52,12 @@ router.get(
 router.get('/traerUsuario/:id',
   validaJWT,
   usuarioController.traerUsuario
+)
+router.post('/recuperarContrasena',
+  [
+    check('correo', 'Ingrese un correo valido.').isEmail()
+  ],
+  usuarioController.recuperarContrasena
 )
 
 router.get('/renewToken', validaJWT, usuarioController.renewToken)
