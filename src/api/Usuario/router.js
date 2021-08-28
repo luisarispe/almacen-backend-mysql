@@ -53,11 +53,11 @@ router.get('/traerUsuario/:id',
   validaJWT,
   usuarioController.traerUsuario
 )
-router.post('/recuperarContrasena',
+router.post('/enviarContrasenaTemporal',
   [
     check('correo', 'Ingrese un correo valido.').isEmail()
   ],
-  usuarioController.recuperarContrasena
+  usuarioController.enviarContrasenaTemporal
 )
 
 router.get('/renewToken', validaJWT, usuarioController.renewToken)

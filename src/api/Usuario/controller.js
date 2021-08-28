@@ -310,7 +310,7 @@ exports.traerUsuario = async (req, res, next) => {
     })
   }
 }
-exports.recuperarContrasena = async (req, res, next) => {
+exports.enviarContrasenaTemporal = async (req, res, next) => {
   const { correo } = req.body
   try {
     const validaCorreo = await Usuario.findOne({
@@ -327,13 +327,27 @@ exports.recuperarContrasena = async (req, res, next) => {
       })
     }
 
+    const nuevaContrasena = Math.random().toString(36).slice(-15)
+    console.log(validaCorreo.id)
+    // CAMBIO DE CONTRASEÑA
+
+    const salt = bcryptjs.genSaltSync()
+
+    await Usuario.update(
+      { contrasena: bcryptjs.hashSync(nuevaContrasena, salt) },
+      {
+        where: {
+          id: validaCorreo.id
+        }
+      })
+    // DATOS DE ENVÍO DE CORREO
     const asunto = 'Recuperar Contraseña'
     const de = { name: 'EleFactory', email: 'factoryele@gmail.com' }
     const para = [{ name: 'Luis Arispe', email: 'luis.arispe1991@gmail.com' }]
     const cc = [{ name: 'EleFactory', email: 'factoryele@gmail.com' }]
     const responder = { name: 'EleFactory', email: 'factoryele@gmail.com' }
     const template = 1
-    const parametros = { parameter: 'My param value', subject: 'New Subject' }
+    const parametros = { contrasena: nuevaContrasena }
     const datosCorreo = { de, para, responder, parametros, template, cc, asunto }
     await enviarCorreo(datosCorreo)
 
