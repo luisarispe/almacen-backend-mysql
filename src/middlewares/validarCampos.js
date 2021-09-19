@@ -31,8 +31,17 @@ const validaSinCaracteresEsp = (value) => {
     return false
   }
 }
+const validaIgualCampos = (campo1, campo2) => {
+  // SE VALIDA QUE LOS 2 CAMPOS SEAN IGUALES
+  if (campo1 !== campo2) {
+    return false
+  } else {
+    return true
+  }
+}
 
 module.exports = {
   validarCampos,
-  validaSinCaracteresEsp
+  validaSinCaracteresEsp,
+  validaIgualCampos
 }

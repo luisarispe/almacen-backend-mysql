@@ -5,6 +5,14 @@ const { Op } = require('sequelize')
 const perfil = require('../model/perfil')
 const { enviarCorreo } = require('../../helpers/enviarCorreo')
 
+const delay = (t, val) => {
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(val)
+    }, t)
+  })
+}
+
 exports.agregar = async (req, res, next) => {
   const { correo, contrasena, nombre } = req.body
   try {
@@ -328,7 +336,6 @@ exports.enviarContrasenaTemporal = async (req, res, next) => {
     }
 
     const nuevaContrasena = Math.random().toString(36).slice(-15)
-    console.log(validaCorreo.id)
     // CAMBIO DE CONTRASEÑA
 
     const salt = bcryptjs.genSaltSync()
@@ -354,6 +361,52 @@ exports.enviarContrasenaTemporal = async (req, res, next) => {
     res.status(200).json({
       ok: true,
       mensaje: 'El correo fue enviado.'
+    })
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      mensaje: 'Hable con el administrador.'
+    })
+  }
+}
+
+exports.cambiarContrasena = async (req, res, next) => {
+  try {
+    await delay(1000)
+    const idUsuario = req.idUsuario
+    const { contrasena, contrasenaNueva } = req.body
+
+    const usuario = await Usuario.findOne({
+      where: {
+        id: idUsuario,
+        estado: 1
+      }
+    })
+
+    const validaContrasena = await bcryptjs.compare(
+      contrasena,
+      usuario.contrasena
+    )
+
+    if (!validaContrasena) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: 'La contraseña es incorrecta.'
+      })
+    }
+
+    const salt = bcryptjs.genSaltSync()
+    await Usuario.update(
+      { contrasena: bcryptjs.hashSync(contrasenaNueva, salt) },
+      {
+        where: {
+          id: idUsuario
+        }
+      })
+
+    res.status(200).json({
+      ok: true,
+      mensaje: 'La contraseña fue actualizada.'
     })
   } catch (error) {
     res.status(500).json({
