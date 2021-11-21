@@ -27,8 +27,9 @@ const Usuario = db.define('usuario', {
     allowNull: false
   },
   estado: {
-    type: DataTypes.INTEGER(1),
-    defaultValue: 1,
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
     comment: 'Cuando el valor es 1 esta activo y si es 0 inactivo'
   }
 
