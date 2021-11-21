@@ -1,11 +1,11 @@
 const { DataTypes } = require('sequelize')
 const { db } = require('../../database/config')
 
-const Perfil = db.define('perfil', {
-  nombre: {
+const Role = db.define('role', {
+  name: {
     type: DataTypes.STRING(100)
   }
 }, { timestamps: false }
 )
 
-module.exports = Perfil
+module.exports = Role

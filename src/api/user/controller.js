@@ -1,8 +1,8 @@
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const Usuario = require('./model')
+const User = require('./model')
 const { Op } = require('sequelize')
-const perfil = require('../model/perfil')
+const Role = require('../model/role')
 const { enviarCorreo } = require('../../helpers/enviarCorreo')
 
 const delay = (t, val) => {
@@ -13,91 +13,90 @@ const delay = (t, val) => {
   })
 }
 
-exports.agregar = async (req, res, next) => {
-  const { correo, contrasena, nombre } = req.body
+exports.create = async (req, res, next) => {
+  const { email, password, name } = req.body
   try {
-    const existeCorreo = await Usuario.findOne({
+    const existsEmail = await User.findOne({
       where: {
-        correo
+        email
       }
     })
-    if (existeCorreo) {
+    if (existsEmail) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'El correo ya esta registrado.'
+        msg: 'El correo ya esta registrado.'
       })
     }
 
     const salt = bcryptjs.genSaltSync()
 
-    const usuario = await Usuario.create({
-      nombre,
-      correo,
-      contrasena: bcryptjs.hashSync(contrasena, salt)
+    const userCreate = await User.create({
+      name,
+      email,
+      password: bcryptjs.hashSync(password, salt)
     })
 
     // SE AGREGA UN PERFIL AL USUARIO POR DEFECTO
-    usuario.addPerfiles(1)
+    userCreate.addRoles(1)
 
     return res.status(200).json({
       ok: true,
-      mensaje: 'Usuario creado.'
+      msg: 'Usuario creado.'
     })
   } catch (err) {
-    console.log(err)
     return res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
-exports.actualizar = async (req, res, next) => {
+exports.update = async (req, res, next) => {
   const { id } = req.params
-  const { correo, nombre } = req.body
+  const { email, name } = req.body
 
   try {
-    const usuario = await Usuario.findOne({
+    const existsUser = await User.findOne({
       where: {
         id
       }
     })
-    if (!usuario) {
+    if (!existsUser) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'No existe usuario.'
+        msg: 'No existe usuario.'
       })
     }
 
-    const validaCorreo = await Usuario.findOne({
+    const validateEmail = await User.findOne({
       where: {
-        correo,
+        email,
         id: {
           [Op.not]: id
         }
       }
     })
     // VALIDAMOS QUE EL CORREO NUEVO SEA UNICO
-    if (validaCorreo) {
+    if (validateEmail) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'El correo ya esta registrado.'
+        msg: 'El correo ya esta registrado.'
       })
     }
 
-    await Usuario.update(
-      { nombre, correo },
+    await User.update(
+      { name, email },
       {
         where: {
           id
         }
       }
     )
-    const UsuarioAct = await Usuario.findByPk(id, {
+    const userUpdate = await User.findByPk(id, {
       include: [
         {
-          model: perfil,
-          as: 'perfiles',
-          attributes: ['id', 'nombre'],
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
           through: {
             attributes: []
           }
@@ -107,33 +106,32 @@ exports.actualizar = async (req, res, next) => {
 
     return res.status(200).json({
       ok: true,
-      mensaje: 'El usuario fue actualizado.',
-      usuario: UsuarioAct
+      msg: 'El usuario fue actualizado.',
+      user: userUpdate
     })
   } catch (error) {
-    console.log(error)
     return res.status(500).json({
       ok: false,
       mensaje: 'Hable con el administrador.'
     })
   }
 }
-exports.actualizarEstado = async (req, res, next) => {
+exports.updateState = async (req, res, next) => {
   const { id } = req.params
   try {
-    const usuario = await Usuario.findByPk(id)
+    const user = await User.findByPk(id)
 
     // VALIDAMOS SI EXISTE EL USUARIO
-    if (!usuario) {
+    if (!user) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'No existe usuario.'
+        msg: 'No existe usuario.'
       })
     }
-    const estado = usuario.estado === 0 ? 1 : 0
+    const state = user.state === 0 ? 1 : 0
 
-    await Usuario.update(
-      { estado },
+    await User.update(
+      { state },
       {
         where: {
           id
@@ -141,31 +139,31 @@ exports.actualizarEstado = async (req, res, next) => {
       })
     return res.status(200).json({
       ok: true,
-      mensaje: 'Estado actualizado.'
+      msg: 'Estado actualizado.'
     })
   } catch (error) {
     return res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
 exports.login = async (req, res, next) => {
-  const { correo, contrasena } = req.body
+  const { email, password } = req.body
 
   try {
-    const usuario = await Usuario.findOne({
+    const user = await User.findOne({
       where: {
-        correo,
-        estado: 1
+        email,
+        state: 1
       },
 
       include: [
         {
-          model: perfil,
-          as: 'perfiles',
-          attributes: ['id', 'nombre'],
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
           through: {
             attributes: []
           }
@@ -173,127 +171,125 @@ exports.login = async (req, res, next) => {
       ]
 
     })
-    if (!usuario) {
+    if (!user) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'Usuario/Contraseña incorrecta.'
+        msg: 'Usuario/Contraseña incorrecta.'
       })
     }
 
-    const validaContrasena = await bcryptjs.compare(
-      contrasena,
-      usuario.contrasena
+    const validatePassword = await bcryptjs.compare(
+      password,
+      user.password
     )
-    if (!validaContrasena) {
+    if (!validatePassword) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'Usuario/Contraseña incorrecta.'
+        msg: 'Usuario/Contraseña incorrecta.'
       })
     }
 
-    const token = jwt.sign({ idUsuario: usuario.id }, process.env.JWT, {
+    const token = jwt.sign({ idUser: user.id }, process.env.JWT, {
       expiresIn: '24h'
     })
 
     return res.status(200).json({
       ok: true,
-      mensaje: 'Usuario y contraseña correctos',
+      msg: 'Usuario y contraseña correctos',
       token,
-      usuario
+      user
     })
   } catch (error) {
     console.log(error)
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
-exports.listar = async (req, res, next) => {
-  const desde = Number(req.query.desde) || 0
+exports.list = async (req, res, next) => {
+  const from = Number(req.query.desde) || 0
   try {
-    const usuarios = await Usuario.findAndCountAll({
-      attributes: ['id', 'nombre', 'correo', 'estado', 'createdAt', 'updatedAt'],
+    const users = await User.findAndCountAll({
+      attributes: ['id', 'name', 'email', 'state', 'createdAt', 'updatedAt'],
       order: [
         ['createdAt', 'DESC']
       ],
       include: [
         {
-          model: perfil,
-          as: 'perfiles',
-          attributes: ['id', 'nombre'],
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
           through: {
             attributes: []
           }
         }
       ],
       distinct: true,
-      offset: desde,
+      offset: from,
       limit: 5
     })
 
     res.status(200).json({
       ok: true,
-      usuarios: usuarios.rows,
-      total: usuarios.count
+      users: users.rows,
+      total: users.count
     })
   } catch (error) {
-    console.log(error)
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
 exports.renewToken = async (req, res, next) => {
   try {
-    const idUsuario = req.idUsuario
-    const token = jwt.sign({ idUsuario }, process.env.JWT, {
+    const idUser = req.idUser
+    const token = jwt.sign({ idUser }, process.env.JWT, {
       expiresIn: '24h'
     })
-    const usuario = await Usuario.findOne({
+    const user = await User.findOne({
       include: [
         {
-          model: perfil,
-          as: 'perfiles',
-          attributes: ['id', 'nombre'],
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
           through: {
             attributes: []
           }
         }
       ],
       where: {
-        estado: 1,
-        id: idUsuario
+        state: 1,
+        id: idUser
       }
     })
     res.status(200).json({
       ok: true,
-      mensaje: 'Token refrescado',
+      msg: 'Token refrescado',
       token,
-      usuario
+      user
     })
   } catch (error) {
-    console.log(error)
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
-exports.traerUsuario = async (req, res, next) => {
+exports.dataUser = async (req, res, next) => {
   try {
     const { id } = req.params
 
-    const usuario = await Usuario.findByPk(id, {
+    const usuario = await User.findByPk(id, {
       include: [
         {
-          model: perfil,
-          as: 'perfiles',
-          attributes: ['id', 'nombre'],
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
           through: {
             attributes: []
           }
@@ -304,7 +300,7 @@ exports.traerUsuario = async (req, res, next) => {
     if (!usuario) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'Usuario no encontrado.'
+        msg: 'Usuario no encontrado.'
       })
     }
     res.status(200).json({
@@ -314,37 +310,37 @@ exports.traerUsuario = async (req, res, next) => {
   } catch (error) {
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
-exports.enviarContrasenaTemporal = async (req, res, next) => {
-  const { correo } = req.body
+exports.sendTempPassword = async (req, res, next) => {
+  const { email } = req.body
   try {
-    const validaCorreo = await Usuario.findOne({
+    const validateEmail = await User.findOne({
       where: {
-        estado: 1,
-        correo
+        state: 1,
+        email
       }
     })
 
-    if (!validaCorreo) {
+    if (!validateEmail) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'El correo no existe.'
+        msg: 'El correo no existe.'
       })
     }
 
-    const nuevaContrasena = Math.random().toString(36).slice(-15)
+    const newPassword = Math.random().toString(36).slice(-15)
     // CAMBIO DE CONTRASEÑA
 
     const salt = bcryptjs.genSaltSync()
 
-    await Usuario.update(
-      { contrasena: bcryptjs.hashSync(nuevaContrasena, salt) },
+    await User.update(
+      { password: bcryptjs.hashSync(newPassword, salt) },
       {
         where: {
-          id: validaCorreo.id
+          id: validateEmail.id
         }
       })
     // DATOS DE ENVÍO DE CORREO
@@ -354,64 +350,63 @@ exports.enviarContrasenaTemporal = async (req, res, next) => {
     const cc = [{ name: 'EleFactory', email: 'factoryele@gmail.com' }]
     const responder = { name: 'EleFactory', email: 'factoryele@gmail.com' }
     const template = 1
-    const parametros = { contrasena: nuevaContrasena }
+    const parametros = { contrasena: newPassword }
     const datosCorreo = { de, para, responder, parametros, template, cc, asunto }
     await enviarCorreo(datosCorreo)
 
     res.status(200).json({
       ok: true,
-      mensaje: 'El correo fue enviado.'
+      msg: 'El correo fue enviado.'
     })
   } catch (error) {
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
-exports.cambiarContrasena = async (req, res, next) => {
+exports.changePassword = async (req, res, next) => {
   try {
     await delay(1000)
-    const idUsuario = req.idUsuario
-    const { contrasena, contrasenaNueva } = req.body
+    const idUser = req.idUser
+    const { password, passwordNew } = req.body
 
-    const usuario = await Usuario.findOne({
+    const user = await User.findOne({
       where: {
-        id: idUsuario,
-        estado: 1
+        id: idUser,
+        state: 1
       }
     })
-
-    const validaContrasena = await bcryptjs.compare(
-      contrasena,
-      usuario.contrasena
+    const validatePassowrd = await bcryptjs.compare(
+      password,
+      user.password
     )
 
-    if (!validaContrasena) {
+    if (!validatePassowrd) {
       return res.status(500).json({
         ok: false,
-        mensaje: 'La contraseña es incorrecta.'
+        msg: 'La contraseña es incorrecta.'
       })
     }
 
     const salt = bcryptjs.genSaltSync()
-    await Usuario.update(
-      { contrasena: bcryptjs.hashSync(contrasenaNueva, salt) },
+    await User.update(
+      { password: bcryptjs.hashSync(passwordNew, salt) },
       {
         where: {
-          id: idUsuario
+          id: idUser
         }
       })
 
     res.status(200).json({
       ok: true,
-      mensaje: 'La contraseña fue actualizada.'
+      msg: 'La contraseña fue actualizada.'
     })
   } catch (error) {
     res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }

@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator')
 
-const validarCampos = (req, res, next) => {
+const validateInputs = (req, res, next) => {
   try {
     const errores = validationResult(req)
     if (!errores.isEmpty()) {
@@ -11,19 +11,19 @@ const validarCampos = (req, res, next) => {
 
       return res.status(500).json({
         ok: false,
-        mensaje: msgs[0]
+        msg: msgs[0]
       })
     }
     next()
   } catch (error) {
     return res.status(500).json({
       ok: false,
-      mensaje: 'Hable con el administrador.'
+      msg: 'Hable con el administrador.'
     })
   }
 }
 
-const validaSinCaracteresEsp = (value) => {
+const validateNoCharactersEsp = (value) => {
   // SE VALIDA QUE SOLO SE PUEDE INGRESAR LETRAS
   if (/^[a-zA-ZÀ-ÿ\s]{1,100}$/.test(value)) {
     return true
@@ -31,9 +31,9 @@ const validaSinCaracteresEsp = (value) => {
     return false
   }
 }
-const validaIgualCampos = (campo1, campo2) => {
+const validateEqualInputs = (input1, input2) => {
   // SE VALIDA QUE LOS 2 CAMPOS SEAN IGUALES
-  if (campo1 !== campo2) {
+  if (input1 !== input2) {
     return false
   } else {
     return true
@@ -41,7 +41,7 @@ const validaIgualCampos = (campo1, campo2) => {
 }
 
 module.exports = {
-  validarCampos,
-  validaSinCaracteresEsp,
-  validaIgualCampos
+  validateInputs,
+  validateNoCharactersEsp,
+  validateEqualInputs
 }
