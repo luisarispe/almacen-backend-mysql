@@ -4,6 +4,7 @@ const User = require('./model')
 const { Op } = require('sequelize')
 const Role = require('../model/role')
 const { enviarCorreo } = require('../../helpers/enviarCorreo')
+const logger = require('../../config/logger')
 
 const delay = (t, val) => {
   return new Promise(function (resolve) {
@@ -44,6 +45,7 @@ exports.create = async (req, res, next) => {
       msg: 'Usuario creado.'
     })
   } catch (err) {
+    logger.log('error', `user/create ${err}`)
     return res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -109,7 +111,8 @@ exports.update = async (req, res, next) => {
       msg: 'El usuario fue actualizado.',
       user: userUpdate
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/update ${err}`)
     return res.status(500).json({
       ok: false,
       mensaje: 'Hable con el administrador.'
@@ -141,7 +144,8 @@ exports.updateState = async (req, res, next) => {
       ok: true,
       msg: 'Estado actualizado.'
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/updateState ${err}`)
     return res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -199,8 +203,8 @@ exports.login = async (req, res, next) => {
       token,
       user
     })
-  } catch (error) {
-    console.log(error)
+  } catch (err) {
+    logger.log('error', `user/login ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -236,7 +240,8 @@ exports.list = async (req, res, next) => {
       users: users.rows,
       total: users.count
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/list ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -272,7 +277,8 @@ exports.renewToken = async (req, res, next) => {
       token,
       user
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/renewToken ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -307,7 +313,8 @@ exports.dataUser = async (req, res, next) => {
       ok: true,
       usuario
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/dataUser ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -358,7 +365,8 @@ exports.sendTempPassword = async (req, res, next) => {
       ok: true,
       msg: 'El correo fue enviado.'
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/sendTempPassword ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -403,7 +411,8 @@ exports.changePassword = async (req, res, next) => {
       ok: true,
       msg: 'La contraseña fue actualizada.'
     })
-  } catch (error) {
+  } catch (err) {
+    logger.log('error', `user/changePassword ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
