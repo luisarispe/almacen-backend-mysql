@@ -1,5 +1,5 @@
 const app = require('./app')
-const { testConneccion } = require('./database/config')
+const { testConneccion } = require('./config/database')
 
 testConneccion()
 
