@@ -9,7 +9,7 @@ const validateInputs = (req, res, next) => {
         return error.msg
       })
 
-      return res.status(500).json({
+      return res.status(400).json({
         ok: false,
         msg: msgs[0]
       })
