@@ -60,7 +60,7 @@
  *                  description: Usuario inicio sesión
  *              400:
  *                  description: Falta algun parametro(email o password)
- *              401:
+ *              403:
  *                  description: Usuario/Contraseña incorreta
  *              500:
  *                  description: Error de servidor, favor contactarse con el administrador

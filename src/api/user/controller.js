@@ -176,7 +176,7 @@ exports.login = async (req, res, next) => {
 
     })
     if (!user) {
-      return res.status(401).json({
+      return res.status(403).json({
         ok: false,
         msg: 'Usuario/Contraseña incorrecta.'
       })
@@ -187,7 +187,7 @@ exports.login = async (req, res, next) => {
       user.password
     )
     if (!validatePassword) {
-      return res.status(401).json({
+      return res.status(403).json({
         ok: false,
         msg: 'Usuario/Contraseña incorrecta.'
       })
