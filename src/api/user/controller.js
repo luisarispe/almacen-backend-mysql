@@ -72,6 +72,28 @@ exports.login = async (req, res, next) => {
     })
   }
 }
+exports.validateTokenExpired = (req, res, next) => {
+  try {
+    const { token } = req.body
+    if (!token) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'No hay token en la petición'
+      })
+    }
+    jwt.verify(token, process.env.JWT)
+
+    return res.status(200).json({
+      ok: true,
+      msg: 'El token aun sigue vigente'
+    })
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      msg: 'El token expiro'
+    })
+  }
+}
 
 exports.user = async (req, res, next) => {
   try {

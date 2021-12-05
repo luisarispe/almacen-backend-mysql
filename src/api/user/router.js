@@ -27,6 +27,10 @@ router.get(
   validateJWT,
   userController.user
 )
+router.post(
+  '/validateTokenExpired',
+  userController.validateTokenExpired
+)
 
 router.get(
   '/list',
