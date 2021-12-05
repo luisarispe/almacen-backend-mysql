@@ -23,6 +23,12 @@ router.post(
   userController.login
 )
 router.get(
+  '/user',
+  validateJWT,
+  userController.user
+)
+
+router.get(
   '/list',
   validateJWT,
   userController.list

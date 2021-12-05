@@ -66,3 +66,29 @@
  *                  description: Error de servidor, favor contactarse con el administrador
  *
  */
+
+// #######################################################SERVICIO PARA MOSTRAR LA INFORMACIÓN DEL USUARIO
+/**
+ * @swagger
+ *  /api/user/user:
+ *      get:
+ *          summary: Servicio para traer la información del usuario
+ *          tags: [user]
+ *          parameters:
+ *              -   in: header
+ *                  name: x-token
+ *                  schema:
+ *                      type: string
+ *                  required: true
+ *          responses:
+ *              200:
+ *                  description: Se trae la información del usuario
+ *              400:
+ *                  description: No hay token en la petición
+ *              404:
+ *                  description: El usuario no existe
+ *              401:
+ *                  description: Token expirado
+ *              500:
+ *                  description: Hable con el administrador
+ */

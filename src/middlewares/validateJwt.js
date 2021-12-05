@@ -3,7 +3,6 @@ const User = require('../api/user/model')
 
 const validateJWT = async (req, res, next) => {
   const token = req.header('x-token')
-
   if (!token) {
     // STATUS 401 NO AUTORIZADO
     return res.status(401).json({

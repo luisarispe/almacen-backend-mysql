@@ -14,6 +14,106 @@ const delay = (t, val) => {
   })
 }
 
+exports.login = async (req, res, next) => {
+  const { email, password } = req.body
+
+  try {
+    const user = await User.findOne({
+      where: {
+        email,
+        state: 1
+      },
+
+      include: [
+        {
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
+          through: {
+            attributes: []
+          }
+        }
+      ]
+
+    })
+    if (!user) {
+      return res.status(403).json({
+        ok: false,
+        msg: 'Usuario/Contraseña incorrecta.'
+      })
+    }
+
+    const validatePassword = await bcryptjs.compare(
+      password,
+      user.password
+    )
+    if (!validatePassword) {
+      return res.status(403).json({
+        ok: false,
+        msg: 'Usuario/Contraseña incorrecta.'
+      })
+    }
+
+    const token = jwt.sign({ idUser: user.id }, process.env.JWT, {
+      expiresIn: '24h'
+    })
+
+    return res.status(200).json({
+      ok: true,
+      msg: 'Usuario y contraseña correctos',
+      token,
+      user
+    })
+  } catch (err) {
+    logger.log('error', `user/login ${err}`)
+    res.status(500).json({
+      ok: false,
+      msg: 'Hable con el administrador.'
+    })
+  }
+}
+
+exports.user = async (req, res, next) => {
+  try {
+    const idUser = req.idUser
+    const user = await User.findOne({
+      where: {
+        id: idUser,
+        state: 1
+      },
+
+      include: [
+        {
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    })
+    if (!user) {
+      return res.status(404).json({
+        ok: false,
+        msg: 'El usuario no existe.'
+      })
+    }
+
+    return res.status(200).json({
+      ok: true,
+      msg: 'Información de usuario',
+      user
+    })
+  } catch (err) {
+    logger.log('error', `user/user ${err}`)
+    res.status(500).json({
+      ok: false,
+      msg: 'Hable con el administrador.'
+    })
+  }
+}
+
 exports.create = async (req, res, next) => {
   const { email, password, name } = req.body
   try {
@@ -147,65 +247,6 @@ exports.updateState = async (req, res, next) => {
   } catch (err) {
     logger.log('error', `user/updateState ${err}`)
     return res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
-}
-
-exports.login = async (req, res, next) => {
-  const { email, password } = req.body
-
-  try {
-    const user = await User.findOne({
-      where: {
-        email,
-        state: 1
-      },
-
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ]
-
-    })
-    if (!user) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
-
-    const validatePassword = await bcryptjs.compare(
-      password,
-      user.password
-    )
-    if (!validatePassword) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
-
-    const token = jwt.sign({ idUser: user.id }, process.env.JWT, {
-      expiresIn: '24h'
-    })
-
-    return res.status(200).json({
-      ok: true,
-      msg: 'Usuario y contraseña correctos',
-      token,
-      user
-    })
-  } catch (err) {
-    logger.log('error', `user/login ${err}`)
-    res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
     })
