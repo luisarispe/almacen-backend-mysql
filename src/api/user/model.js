@@ -38,17 +38,12 @@ const User = db.define('user', {
   createdAt: 'created'
 })
 
-const UsersRoles = db.define('users_roles', {}, { timestamps: false })
-
-Role.belongsToMany(User, {
-  through: UsersRoles,
-  as: 'users'
-})
-
-User.belongsToMany(Role, {
-  through: UsersRoles,
-  as: 'roles'
-})
+User.belongsTo(Role,
+  {
+    foreignKey: {
+      defaultValue: 1
+    }
+  })
 
 // Role.sync({
 //   alter: true
@@ -65,5 +60,10 @@ User.belongsToMany(Role, {
 //   console.log(error)
 // })
 // UsersRoles.sync({})
-
+// Menu.sync({
+//   alter: true
+// })
+// SubMenu.sync({
+//   alter: true
+// })
 module.exports = User

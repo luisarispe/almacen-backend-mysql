@@ -23,7 +23,7 @@ router.get(
 router.post(
   '/create',
   valid.create,
-  validateJWT,
+  // validateJWT,
   userController.create
 )
 router.put(

@@ -1,10 +1,14 @@
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const User = require('./model')
 const { Op } = require('sequelize')
-const Role = require('../model/role')
-const { enviarCorreo } = require('../../helpers/enviarCorreo')
 const logger = require('../../config/logger')
+
+const { enviarCorreo } = require('../../helpers/enviarCorreo')
+
+const User = require('./model')
+const Role = require('../model/role')
+
+const { listMenu } = require('../menu/controller')
 
 const delay = (t, val) => {
   return new Promise(function (resolve) {
@@ -19,22 +23,10 @@ exports.login = async (req, res, next) => {
 
   try {
     const user = await User.findOne({
-      where: {
-        email,
-        state: 1
-      },
-
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ]
-
+      where: { email, state: 1 },
+      include: {
+        model: Role
+      }
     })
     if (!user) {
       return res.status(403).json({
@@ -58,11 +50,14 @@ exports.login = async (req, res, next) => {
       expiresIn: '24h'
     })
 
+    const menus = await listMenu(user.role.id)
+
     return res.status(200).json({
       ok: true,
       msg: 'Usuario y contraseña correctos',
       token,
-      user
+      user,
+      menus
     })
   } catch (err) {
     logger.log('error', `user/login ${err}`)
@@ -81,17 +76,9 @@ exports.user = async (req, res, next) => {
         id: idUser,
         state: 1
       },
-
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ]
+      include: {
+        model: Role
+      }
     })
     if (!user) {
       return res.status(404).json({
@@ -121,16 +108,9 @@ exports.renewToken = async (req, res, next) => {
       expiresIn: '24h'
     })
     const user = await User.findOne({
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ],
+      include: {
+        model: Role
+      },
       where: {
         state: 1,
         id: idUser
@@ -174,12 +154,10 @@ exports.create = async (req, res, next) => {
       password: bcryptjs.hashSync(password, salt)
     })
 
-    // SE AGREGA UN PERFIL AL USUARIO POR DEFECTO
-    userCreate.addRoles(1)
-
     return res.status(200).json({
       ok: true,
-      msg: 'Usuario creado.'
+      msg: 'Usuario creado.',
+      user: userCreate
     })
   } catch (err) {
     logger.log('error', `user/create ${err}`)
