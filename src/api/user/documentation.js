@@ -67,7 +67,7 @@
  *
  */
 
-// #######################################################SERVICIO PARA MOSTRAR LA INFORMACIÓN DEL USUARIO
+// #######################################################SERVICIO PARA MOSTRAR LA INFORMACIÓN DEL USUARIO#########################################
 /**
  * @swagger
  *  /api/user/user:
@@ -87,6 +87,29 @@
  *                  description: No hay token en la petición
  *              404:
  *                  description: El usuario no existe
+ *              401:
+ *                  description: Token expirado
+ *              500:
+ *                  description: Hable con el administrador
+ */
+// ##########################################################SERVICIO PARA ACTUALIZAR EL TOKEN####################################################
+/**
+ * @swagger
+ *  /api/user/renewToken:
+ *      get:
+ *          summary: Servicio para actualizar el token
+ *          tags: [user]
+ *          parameters:
+ *              -   in: header
+ *                  name: x-token
+ *                  schema:
+ *                      type: string
+ *                  required: true
+ *          responses:
+ *              200:
+ *                  description: El token es actualizado
+ *              400:
+ *                  description: No hay token en la petición
  *              401:
  *                  description: Token expirado
  *              500:

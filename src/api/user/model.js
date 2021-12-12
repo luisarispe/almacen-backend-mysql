@@ -33,6 +33,9 @@ const User = db.define('user', {
     comment: 'When the value is 1 it is active and if it is 0 inactive'
   }
 
+}, {
+  updatedAt: 'updated',
+  createdAt: 'created'
 })
 
 const UsersRoles = db.define('users_roles', {}, { timestamps: false })
@@ -56,7 +59,6 @@ User.belongsToMany(Role, {
 // })
 
 // User.sync({
-//   alter: true
 // }).then(() => {
 //   console.log(1)
 // }).catch(error => {

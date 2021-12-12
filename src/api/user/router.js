@@ -6,6 +6,21 @@ const validateJWT = require('../../middlewares/validateJwt')
 const valid = require('./validators')
 
 router.post(
+  '/login',
+  valid.login,
+  userController.login
+)
+router.get(
+  '/user',
+  validateJWT,
+  userController.user
+)
+router.get(
+  '/renewToken',
+  validateJWT,
+  userController.renewToken)
+
+router.post(
   '/create',
   valid.create,
   validateJWT,
@@ -16,20 +31,6 @@ router.put(
   valid.update,
   validateJWT,
   userController.update
-)
-router.post(
-  '/login',
-  valid.login,
-  userController.login
-)
-router.get(
-  '/user',
-  validateJWT,
-  userController.user
-)
-router.post(
-  '/validateTokenExpired',
-  userController.validateTokenExpired
 )
 
 router.get(
@@ -42,11 +43,6 @@ router.get(
   validateJWT,
   userController.updateState
 )
-
-router.get('/dataUser/:id',
-  validateJWT,
-  userController.dataUser
-)
 router.post('/sendTempPassword',
   valid.sendTempPassword,
   userController.sendTempPassword
@@ -56,5 +52,4 @@ router.post('/changePassowrd',
   validateJWT,
   userController.changePassword)
 
-router.get('/renewToken', validateJWT, userController.renewToken)
 module.exports = router

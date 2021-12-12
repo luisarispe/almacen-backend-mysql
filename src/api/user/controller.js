@@ -72,28 +72,6 @@ exports.login = async (req, res, next) => {
     })
   }
 }
-exports.validateTokenExpired = (req, res, next) => {
-  try {
-    const { token } = req.body
-    if (!token) {
-      return res.status(400).json({
-        ok: false,
-        msg: 'No hay token en la petición'
-      })
-    }
-    jwt.verify(token, process.env.JWT)
-
-    return res.status(200).json({
-      ok: true,
-      msg: 'El token aun sigue vigente'
-    })
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      msg: 'El token expiro'
-    })
-  }
-}
 
 exports.user = async (req, res, next) => {
   try {
@@ -129,6 +107,43 @@ exports.user = async (req, res, next) => {
     })
   } catch (err) {
     logger.log('error', `user/user ${err}`)
+    res.status(500).json({
+      ok: false,
+      msg: 'Hable con el administrador.'
+    })
+  }
+}
+
+exports.renewToken = async (req, res, next) => {
+  try {
+    const idUser = req.idUser
+    const token = jwt.sign({ idUser }, process.env.JWT, {
+      expiresIn: '24h'
+    })
+    const user = await User.findOne({
+      include: [
+        {
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'name'],
+          through: {
+            attributes: []
+          }
+        }
+      ],
+      where: {
+        state: 1,
+        id: idUser
+      }
+    })
+    res.status(200).json({
+      ok: true,
+      msg: 'Token actualizado',
+      token,
+      user
+    })
+  } catch (err) {
+    logger.log('error', `user/renewToken ${err}`)
     res.status(500).json({
       ok: false,
       msg: 'Hable con el administrador.'
@@ -312,78 +327,6 @@ exports.list = async (req, res, next) => {
   }
 }
 
-exports.renewToken = async (req, res, next) => {
-  try {
-    const idUser = req.idUser
-    const token = jwt.sign({ idUser }, process.env.JWT, {
-      expiresIn: '24h'
-    })
-    const user = await User.findOne({
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ],
-      where: {
-        state: 1,
-        id: idUser
-      }
-    })
-    res.status(200).json({
-      ok: true,
-      msg: 'Token refrescado',
-      token,
-      user
-    })
-  } catch (err) {
-    logger.log('error', `user/renewToken ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
-}
-
-exports.dataUser = async (req, res, next) => {
-  try {
-    const { id } = req.params
-
-    const usuario = await User.findByPk(id, {
-      include: [
-        {
-          model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
-        }
-      ]
-    })
-
-    if (!usuario) {
-      return res.status(500).json({
-        ok: false,
-        msg: 'Usuario no encontrado.'
-      })
-    }
-    res.status(200).json({
-      ok: true,
-      usuario
-    })
-  } catch (err) {
-    logger.log('error', `user/dataUser ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
-}
 exports.sendTempPassword = async (req, res, next) => {
   const { email } = req.body
   try {

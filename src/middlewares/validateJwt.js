@@ -2,10 +2,11 @@ const jwt = require('jsonwebtoken')
 const User = require('../api/user/model')
 
 const validateJWT = async (req, res, next) => {
+  // await delay(5000)
   const token = req.header('x-token')
   if (!token) {
     // STATUS 401 NO AUTORIZADO
-    return res.status(401).json({
+    return res.status(400).json({
       ok: false,
       msg: 'No hay token en la petición'
     })
