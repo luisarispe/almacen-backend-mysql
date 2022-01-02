@@ -12,6 +12,9 @@ const SubMenu = db.define('submenu', {
       return 'basic'
     }
   },
+  icon: {
+    type: DataTypes.STRING(100)
+  },
   link: {
     type: DataTypes.STRING(100),
     allowNull: false

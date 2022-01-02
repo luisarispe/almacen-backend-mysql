@@ -8,8 +8,6 @@ const { enviarCorreo } = require('../../helpers/enviarCorreo')
 const User = require('./model')
 const Role = require('../model/role')
 
-const { listMenu } = require('../menu/controller')
-
 const delay = (t, val) => {
   return new Promise(function (resolve) {
     setTimeout(function () {
@@ -50,14 +48,11 @@ exports.login = async (req, res, next) => {
       expiresIn: '24h'
     })
 
-    const menus = await listMenu(user.role.id)
-
     return res.status(200).json({
       ok: true,
       msg: 'Usuario y contraseña correctos',
       token,
-      user,
-      menus
+      user
     })
   } catch (err) {
     logger.log('error', `user/login ${err}`)

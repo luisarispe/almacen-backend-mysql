@@ -1,6 +1,8 @@
 const { Router } = require('express')
-const usuarioRouter = require('./api/user/router')
+const userRouter = require('./api/user/router')
+const menuRouter = require('./api/menu/router')
 
 const router = Router()
-router.use('/user', usuarioRouter)
+router.use('/user', userRouter)
+router.use('/menu', menuRouter)
 module.exports = router
