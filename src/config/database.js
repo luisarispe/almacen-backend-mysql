@@ -13,10 +13,10 @@ const db = new Sequelize(
       // useUTC: false, //for reading from database
       dateStrings: true,
       typeCast: true,
-      timezone: '-03:00'
+      timezone: '-04:00'
 
     },
-    timezone: '-03:00', // for writing to database
+    timezone: '-04:00', // for writing to database
     port: process.env.MYSQL_PORT,
     define: {
       timestamps: true,

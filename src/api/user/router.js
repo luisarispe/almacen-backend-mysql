@@ -6,21 +6,6 @@ const validateJWT = require('../../middlewares/validateJwt')
 const valid = require('./validators')
 
 router.post(
-  '/login',
-  valid.login,
-  userController.login
-)
-router.get(
-  '/user',
-  validateJWT,
-  userController.user
-)
-router.get(
-  '/renewToken',
-  validateJWT,
-  userController.renewToken)
-
-router.post(
   '/create',
   valid.create,
   // validateJWT,

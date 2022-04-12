@@ -14,7 +14,8 @@ const Menu = db.define('menu', {
     allowNull: false
   },
   link: {
-    type: DataTypes.STRING(100)
+    type: DataTypes.STRING(100),
+    allowNull: false
   },
   order: {
     type: DataTypes.INTEGER,
@@ -48,6 +49,6 @@ Role.belongsToMany(Menu, {
   through: MenusRoles,
   as: 'menus'
 })
-SubMenu.sync({ alter: true })
+// Menu.sync({ alter: true })
 
 module.exports = Menu

@@ -17,12 +17,6 @@ const update = [
   validateInputs
 ]
 
-const login = [
-  check('email', 'Ingrese un correo valido.').isEmail(),
-  check('password', 'La contraseña es obligatoria.').not().isEmpty(),
-  validateInputs
-]
-
 const sendTempPassword = [
   check('email', 'Ingrese un correo valido.').isEmail(),
   validateInputs
@@ -39,7 +33,6 @@ const changePassword = [
 module.exports = {
   create,
   update,
-  login,
   sendTempPassword,
   changePassword
 }

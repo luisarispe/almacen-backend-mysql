@@ -1,5 +1,4 @@
 const bcryptjs = require('bcryptjs')
-const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 const logger = require('../../config/logger')
 
@@ -7,123 +6,12 @@ const { enviarCorreo } = require('../../helpers/enviarCorreo')
 
 const User = require('./model')
 const Role = require('../model/role')
-
 const delay = (t, val) => {
   return new Promise(function (resolve) {
     setTimeout(function () {
       resolve(val)
     }, t)
   })
-}
-
-exports.login = async (req, res, next) => {
-  const { email, password } = req.body
-
-  try {
-    const user = await User.findOne({
-      where: { email, state: 1 },
-      include: {
-        model: Role
-      }
-    })
-    if (!user) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
-
-    const validatePassword = await bcryptjs.compare(
-      password,
-      user.password
-    )
-    if (!validatePassword) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
-
-    const token = jwt.sign({ idUser: user.id }, process.env.JWT, {
-      expiresIn: '24h'
-    })
-
-    return res.status(200).json({
-      ok: true,
-      msg: 'Usuario y contraseña correctos',
-      token,
-      user
-    })
-  } catch (err) {
-    logger.log('error', `user/login ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
-}
-
-exports.user = async (req, res, next) => {
-  try {
-    const idUser = req.idUser
-    const user = await User.findOne({
-      where: {
-        id: idUser,
-        state: 1
-      },
-      include: {
-        model: Role
-      }
-    })
-    if (!user) {
-      return res.status(404).json({
-        ok: false,
-        msg: 'El usuario no existe.'
-      })
-    }
-
-    return res.status(200).json({
-      ok: true,
-      msg: 'Información de usuario',
-      user
-    })
-  } catch (err) {
-    logger.log('error', `user/user ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
-}
-
-exports.renewToken = async (req, res, next) => {
-  try {
-    const idUser = req.idUser
-    const token = jwt.sign({ idUser }, process.env.JWT, {
-      expiresIn: '24h'
-    })
-    const user = await User.findOne({
-      include: {
-        model: Role
-      },
-      where: {
-        state: 1,
-        id: idUser
-      }
-    })
-    res.status(200).json({
-      ok: true,
-      msg: 'Token actualizado',
-      token,
-      user
-    })
-  } catch (err) {
-    logger.log('error', `user/renewToken ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
-  }
 }
 
 exports.create = async (req, res, next) => {
@@ -267,18 +155,15 @@ exports.list = async (req, res, next) => {
   const from = Number(req.query.desde) || 0
   try {
     const users = await User.findAndCountAll({
-      attributes: ['id', 'name', 'email', 'state', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'name', 'email', 'state', 'created', 'updated'],
       order: [
-        ['createdAt', 'DESC']
+        ['created', 'DESC']
       ],
       include: [
         {
           model: Role,
-          as: 'roles',
-          attributes: ['id', 'name'],
-          through: {
-            attributes: []
-          }
+          as: 'role',
+          attributes: ['id', 'name']
         }
       ],
       distinct: true,
