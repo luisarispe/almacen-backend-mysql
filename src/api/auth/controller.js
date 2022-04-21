@@ -3,9 +3,13 @@ const jwt = require('jsonwebtoken')
 const logger = require('../../config/logger')
 const { Op } = require('sequelize')
 
+const responseError = require('../../helpers/responseError')
+const { sendEmail } = require('../../helpers/sendEmail')
+
+const menuController = require('../menu/controller')
+
 const User = require('../user/model')
 const Role = require('../model/role')
-const menuController = require('../menu/controller')
 
 // const delay = (t, val) => {
 //   return new Promise(function (resolve) {
@@ -22,23 +26,11 @@ exports.login = async (req, res, next) => {
     const userValid = await User.findOne({
       where: { email, state: 1 }
     })
-    if (!userValid) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
+    if (!userValid) return responseError(res, 'Usuario/Contraseña incorrecta.', 404)
 
-    const validatePassword = await bcryptjs.compare(
-      password,
-      userValid.password
-    )
-    if (!validatePassword) {
-      return res.status(403).json({
-        ok: false,
-        msg: 'Usuario/Contraseña incorrecta.'
-      })
-    }
+    const validatePassword = await bcryptjs.compare(password, userValid.password)
+
+    if (!validatePassword) return responseError(res, 'Usuario/Contraseña incorrecta.', 401)
 
     const token = jwt.sign({ idUser: userValid.id }, process.env.JWT, {
       expiresIn: '24h'
@@ -63,11 +55,9 @@ exports.login = async (req, res, next) => {
       routes
     })
   } catch (err) {
+    console.log(err)
     logger.log('error', `user/login ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
+    responseError(res, 'Hable con el administrador.', 500)
   }
 }
 
@@ -104,10 +94,7 @@ exports.renewToken = async (req, res, next) => {
     })
   } catch (err) {
     logger.log('error', `user/renewToken ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
+    responseError(res, 'Hable con el administrador.', 500)
   }
 }
 
@@ -124,12 +111,7 @@ exports.user = async (req, res, next) => {
         model: Role
       }
     })
-    if (!user) {
-      return res.status(404).json({
-        ok: false,
-        msg: 'El usuario no existe.'
-      })
-    }
+    if (!user) return responseError(res, 'El usuario no existe.', 404)
 
     return res.status(200).json({
       ok: true,
@@ -138,10 +120,7 @@ exports.user = async (req, res, next) => {
     })
   } catch (err) {
     logger.log('error', `user/user ${err}`)
-    res.status(500).json({
-      ok: false,
-      msg: 'Hable con el administrador.'
-    })
+    responseError(res, 'Hable con el administrador.', 500)
   }
 }
 
@@ -155,12 +134,7 @@ exports.update = async (req, res, next) => {
         id: idUser
       }
     })
-    if (!existsUser) {
-      return res.status(500).json({
-        ok: false,
-        msg: 'No existe usuario.'
-      })
-    }
+    if (!existsUser) return responseError(res, 'No existe usuario.', 404)
 
     const validateEmail = await User.findOne({
       where: {
@@ -171,12 +145,7 @@ exports.update = async (req, res, next) => {
       }
     })
     // VALIDAMOS QUE EL CORREO NUEVO SEA UNICO
-    if (validateEmail) {
-      return res.status(500).json({
-        ok: false,
-        msg: 'El correo ya esta registrado.'
-      })
-    }
+    if (validateEmail) return responseError(res, 'El correo ya esta registrado.', 409)
 
     await User.update(
       { name, email },
@@ -202,9 +171,86 @@ exports.update = async (req, res, next) => {
     })
   } catch (err) {
     logger.log('error', `user/update ${err}`)
-    return res.status(500).json({
-      ok: false,
-      mensaje: 'Hable con el administrador.'
+    responseError(res, 'Hable con el administrador.', 500)
+  }
+}
+
+exports.sendTempPassword = async (req, res, next) => {
+  const { email } = req.body
+  try {
+    const validateEmail = await User.findOne({
+      where: {
+        state: 1,
+        email
+      }
     })
+
+    if (!validateEmail) return responseError(res, 'El correo no existe.', 404)
+
+    const newPassword = Math.random().toString(36).slice(-15)
+    const salt = bcryptjs.genSaltSync()
+
+    await User.update(
+      { password: bcryptjs.hashSync(newPassword, salt) },
+      {
+        where: {
+          id: validateEmail.id
+        }
+      })
+    // DATOS DE ENVÍO DE CORREO
+    const subject = 'Recuperar Contraseña'
+    const sender = { name: 'EleFactory', email: 'factoryele@gmail.com' }
+    const to = [{ name: validateEmail.name, email: validateEmail.email }]
+    const cc = [{ name: 'EleFactory', email: 'factoryele@gmail.com' }]
+    const replyTo = { name: 'EleFactory', email: 'factoryele@gmail.com' }
+    const template = 1
+    const params = { contrasena: newPassword }
+    const infoEmail = { sender, to, replyTo, params, template, cc, subject }
+    await sendEmail(infoEmail)
+
+    res.status(200).json({
+      ok: true,
+      msg: 'El correo fue enviado.'
+    })
+  } catch (err) {
+    logger.log('error', `user/sendTempPassword ${err}`)
+    responseError(res, 'Hable con el administrador.', 500)
+  }
+}
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const idUser = req.idUser
+    const { password, passwordNew } = req.body
+
+    const user = await User.findOne({
+      where: {
+        id: idUser,
+        state: 1
+      }
+    })
+    const validatePassword = await bcryptjs.compare(
+      password,
+      user.password
+    )
+
+    if (!validatePassword) return responseError(res, 'La contraseña es incorrecta.', 401)
+
+    const salt = bcryptjs.genSaltSync()
+    await User.update(
+      { password: bcryptjs.hashSync(passwordNew, salt) },
+      {
+        where: {
+          id: idUser
+        }
+      })
+
+    res.status(200).json({
+      ok: true,
+      msg: 'La contraseña fue actualizada.'
+    })
+  } catch (err) {
+    logger.log('error', `user/changePassword ${err}`)
+    responseError(res, 'Hable con el administrador.', 500)
   }
 }

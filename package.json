@@ -11,12 +11,14 @@
   "author": "luis arispe",
   "license": "ISC",
   "dependencies": {
+    "@slack/webhook": "^6.1.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-validator": "^6.9.2",
     "jsonwebtoken": "^8.5.1",
+    "morgan-body": "^2.6.6",
     "mysql2": "^2.2.5",
     "sequelize": "^6.5.0",
     "sib-api-v3-sdk": "^8.2.1",
@@ -25,7 +27,6 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "morgan": "^1.10.0",
     "nodemon": "^2.0.7",
     "standard": "^16.0.3"
   }

@@ -1,7 +1,9 @@
 const express = require('express')
 require('dotenv').config()
-const morgan = require('morgan')
 const cors = require('cors')
+const morganBody = require('morgan-body')
+const loggerStream = require('./helpers/sendLogger')
+
 const router = require('./routes')
 const swaggerUI = require('swagger-ui-express')
 const swaggerJsDoc = require('swagger-jsdoc')
@@ -11,7 +13,13 @@ const swaggerConfig = require('./config/swagger')
 const app = express()
 
 // para ver las rutas
-app.use(morgan('dev'))
+morganBody(app, {
+  noColors: true,
+  stream: loggerStream,
+  skip: function (req, res) {
+    return res.statusCode < 400
+  }
+})
 
 app.use(cors())
 

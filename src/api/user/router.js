@@ -28,13 +28,5 @@ router.get(
   validateJWT,
   userController.updateState
 )
-router.post('/sendTempPassword',
-  valid.sendTempPassword,
-  userController.sendTempPassword
-)
-router.post('/changePassowrd',
-  valid.changePassword,
-  validateJWT,
-  userController.changePassword)
 
 module.exports = router

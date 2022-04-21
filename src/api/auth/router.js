@@ -28,4 +28,13 @@ router.put(
   authController.update
 )
 
+router.post('/sendTempPassword',
+  valid.sendTempPassword,
+  authController.sendTempPassword
+)
+router.post('/changePassowrd',
+  valid.changePassword,
+  validateJWT,
+  authController.changePassword)
+
 module.exports = router
